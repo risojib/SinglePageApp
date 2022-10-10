@@ -1,0 +1,254 @@
+﻿@{
+    ViewData["Title"] = "SPA";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Single Page Application</h2>
+<partial name="_PartialViewSPA" />
+<div id="form">
+    <h3>Create Contact</h3>
+    <a href="#" onclick="loadView('list');">List of Contact</a>
+    <div>
+        <div>
+            <input type="hidden" id="contactId" />
+            Name: <input type="text" id="contactName" />
+        </div><br />
+        <div>
+            Country:
+            <select id="country"></select>
+        </div><br />
+        <div>
+            Date of Birth: <input type="date" id="dateOfBirth" />
+        </div><br />
+        <div>
+            Gender:
+            <input type="radio" id="Male" name="gender" value="Male" /> Male
+            <input type="radio" id="Female" name="gender" value="Female" /> Female
+        </div><br />
+        <div>
+            Photo:
+            <input type="file" id="pic" name="pic" />
+        </div><br />
+        <div>
+            <button type="button" onclick="insert();" id="btnInsert">Save</button>
+            <button type="button" onclick="update();" id="btnUpdate">Update</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function loadView(view) {
+        if (view == 'form') {
+            document.getElementById('list').style.display = 'none';
+            document.getElementById('form').style.display = '';
+        } else {
+            document.getElementById('list').style.display = '';
+            document.getElementById('form').style.display = 'none';
+            this.getAll();
+        }
+    }
+    this.loadView('list');
+    this.getCountries();
+
+    var contact = {
+        "contactId": 0,
+        "contactName": "",
+        "countryId": "",
+        "dateOfBirth": "",
+        "gender": ""
+    };
+
+    function addNew() {
+        this.loadView('form');
+        this.reset();
+        document.getElementById('btnInsert').style.display = '';
+        document.getElementById('btnUpdate').style.display = 'none';
+    }
+
+    function insert() {
+        this.contact.contactId = 0;
+        this.contact.contactName = document.getElementById('contactName').value;
+        this.contact.countryId = document.getElementById('country').value;
+        this.contact.dateOfBirth = document.getElementById('dateOfBirth').value;
+        var gender = document.getElementById("Male").checked === true ? 'Male' : 'Female';
+        this.contact.gender = gender;
+        var strJson = JSON.stringify(this.contact);
+
+        var files = document.getElementById('pic').files;
+        var file = files.length > 0 ? files[0] : null;
+        var formData = new FormData();
+        formData.append("picPath", file);
+        formData.append("contactId", this.contact.contactId);
+        formData.append("contactName", this.contact.contactName);
+        formData.append("countryId", this.contact.countryId);
+        formData.append("dateOfBirth", this.contact.dateOfBirth);
+        formData.append("gender", this.contact.gender);
+
+        var http = new XMLHttpRequest();
+        var url = '/Home/ContactAdd';
+        http.open('POST', url, true);
+        http.onreadystatechange = function () {
+            if (http.readyState == 4 && http.status == 200) {
+                if (http.responseText != null) {
+                    var res = JSON.parse(http.responseText);
+                    if (res != null) {
+                        if (res.resstate == true) {
+                            alert('Save successfully.');
+                            loadView('list');
+                        }
+                    }
+                }
+            }
+        }
+        http.send(formData);
+    }
+
+    function update() {
+        this.contact.contactId = document.getElementById('contactId').value;
+        this.contact.contactName = document.getElementById('contactName').value;
+        this.contact.countryId = document.getElementById('country').value;
+        this.contact.dateOfBirth = document.getElementById('dateOfBirth').value;
+        var gender = document.getElementById("Male").checked === true ? 'Male' : 'Female';
+        this.contact.gender = gender;
+
+        var files = document.getElementById('pic').files;
+        var file = files.length > 0 ? files[0] : null;
+        var formData = new FormData();
+        formData.append("picPath", file);
+        formData.append("contactId", this.contact.contactId);
+        formData.append("contactName", this.contact.contactName);
+        formData.append("countryId", this.contact.countryId);
+        formData.append("dateOfBirth", this.contact.dateOfBirth);
+        formData.append("gender", this.contact.gender);
+
+        var http = new XMLHttpRequest();
+        var url = '/Home/ContactEdit';
+        var strJson = JSON.stringify(this.contact);
+        http.open('PUT', url, true);
+        http.onreadystatechange = function () {
+            if (http.readyState == 4 && http.status == 200) {
+                if (http.responseText != null) {
+                    var res = JSON.parse(http.responseText);
+                    if (res != null) {
+                        if (res.resstate == true) {
+                            alert('Update successfully.');
+                            loadView('list');
+                        }
+                    }
+                }
+            }
+        }
+        http.send(formData);
+    }
+
+    function deleteContact(id) {
+        var http = new XMLHttpRequest();
+        var url = '/Home/ContactRemove?id=' + id;
+        var strJson = JSON.stringify(this.contact);
+        http.open('DELETE', url, true);
+        http.setRequestHeader('Content-type', 'application/json'); //application/x-www-form-urlencoded
+        http.onreadystatechange = function () {
+            if (http.readyState == 4 && http.status == 200) {
+                if (http.responseText != null) {
+                    var res = JSON.parse(http.responseText);
+                    if (res.resstate == true) {
+                        alert('Remove successfully.');
+                        loadView('list');
+                    }
+                }
+            }
+        }
+        http.send(strJson);
+    }
+
+    function edit(id) {
+        this.loadView('form');
+        document.getElementById('btnInsert').style.display = 'none';
+        document.getElementById('btnUpdate').style.display = '';
+        this.getById(id);
+    }
+
+    function remove(id) {
+        var isConfirm = confirm('Are you sure to delete?');
+        if (isConfirm) {
+            this.deleteContact(id);
+        }
+    }
+
+    function reset() {
+        document.getElementById('contactId').value = '';
+        document.getElementById('contactName').value = '';
+        document.getElementById('country').value = '';
+        document.getElementById('dateOfBirth').value = '';
+        document.getElementById("Male").checked = false;
+        document.getElementById("Female").checked = false;
+    }
+
+    function getCountries() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/Home/Countries', true);
+        xhr.onload = function () {
+            var options = '';
+            var listCountry = JSON.parse(this.responseText);
+            for (var i = 0; i < listCountry.length; i++) {
+                var option = '<option value="' + listCountry[i].countryId+'">' + listCountry[i].countryName + '</option>';
+                options += option;
+            }
+            document.getElementById('country').innerHTML = options;
+        };
+        xhr.send();
+    }
+
+    function getAll() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/Home/Contacts', true);
+        xhr.onload = function () {
+            var tbody = '';
+            var listContact = JSON.parse(this.responseText);
+            for (var i = 0; i < listContact.length; i++) {
+                var tr = '<tr>'
+                    + '<td><img src="/pics/' + listContact[i].picPath+'" style="width:120px"></td>'
+                    + '<td>' + listContact[i].contactName + '</td>'
+                    + '<td>' + listContact[i].countryName + '</td>'
+                    + '<td>' + listContact[i].gender + '</td>'
+                    + '<td>' + listContact[i].dateOfBirth + '</td>'
+                    + '<td><a href="#" onclick="remove(' + listContact[i].contactId +')">Delete</a></td>'
+                    + '<td><a href="#" onclick="edit(' + listContact[i].contactId+')">Edit</a></td>'
+                    + '<tr>';
+                tbody += tr;
+            }
+            document.getElementById('listContact').innerHTML = tbody;
+        };
+        xhr.send();
+    }
+
+    function getById(id) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/Home/Contact?id=' + id, true);
+        xhr.onload = function () {
+            var oContact = JSON.parse(this.responseText);
+            document.getElementById('contactId').value = oContact.contactId;
+            document.getElementById('contactName').value = oContact.contactName;
+            document.getElementById('country').value = oContact.countryId;
+            document.getElementById('dateOfBirth').value = formatDate(oContact.dateOfBirth);
+            document.getElementById("Male").checked = oContact.gender == 'Male' ? true : false;
+            document.getElementById("Female").checked = oContact.gender == 'Female' ? true : false;
+        };
+        xhr.send();
+    }
+
+    function formatDate(date) {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+        if (month.length < 2) {
+            month = '0' + month;
+        }
+        if (day.length < 2) {
+            day = '0' + day;
+        }
+        return [year, month, day].join('-');
+    }
+</script>
